@@ -3,8 +3,7 @@ import styled from "styled-components";
 import Button from "../ui/Button";
 import PostList from "../list/PostList";
 import { useEffect, useState } from "react";
-import axios from "axios";
-// import data from '../../data.json';
+import { getPosts } from "../../api/postAxios";
 
 const Wrapper = styled.div`
     padding: 16px;
@@ -26,21 +25,14 @@ const Container = styled.div`
     }
 `;
 
-function MainPage(props) {
+function MainPage() {
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
 
-    const getPosts = async () => {
-        try {
-            const res = await axios.get('http://localhost:8080/post');
-            setPosts(res.data);
-        } catch (error) {
-            console.error(error);
-        }
-    }
-
     useEffect(() => {
-        getPosts();
+        getPosts()
+        .then((data) => setPosts(data))
+        .catch((e) => console.error(e));
     }, []);
 
     return (

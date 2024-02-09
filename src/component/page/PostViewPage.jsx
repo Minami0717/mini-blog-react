@@ -4,8 +4,9 @@ import Button from "../ui/Button";
 import TextInput from "../ui/TextInput";
 import { useEffect, useState } from "react";
 import CommentList from "../list/CommentList";
-import getData from "../../data";
 import axios from "axios";
+import { delPost, getPost } from "../../api/postAxios";
+import { insComment } from "../../api/commentAxios";
 
 const Wrapper = styled.div`
     padding: 16px;
@@ -20,10 +21,8 @@ const Container = styled.div`
     width: 100%;
     max-width: 720px;
 
-    & {
-        :not(:last-child) {
-            margin-bottom: 16px;
-        }
+    & * {
+        margin-bottom: 16px;
     }
 `;
 
@@ -49,58 +48,80 @@ const CommentLabel = styled.p`
     font-weight: 500;
 `;
 
+const ButtonBox = styled.div`
+    display: flex;
+    & > :first-child {
+        margin-right: auto;
+    }
+    & > :nth-child(2) {
+        margin-right: 10px;
+    }
+`;
+
 function PostViewPage(props) {
     const navigate = useNavigate();
     const { postId } = useParams();
     const [post, setPost] = useState('');
     const [comment, setComment] = useState('');
 
-    const getPost = async () => {
-        try {
-            const res = await axios.get(`http://localhost:8080/post/${postId}`);
-            setPost(res.data);
-        } catch (error) {
-            console.error(error);
-        }
+    const getPostData = () => {
+        getPost(postId)
+        .then((data) => setPost(data))
+        .catch((e) => console.error(e));
     }
 
-    const writeComment = async () => {
+    const writeComment = () => {
         const newComment = {
             postId: postId,
             content: comment
         };
 
-        try {
-            const res = await axios.post("http://localhost:8080/cmt", newComment);
-            if (res.data === 1) {
-                getPost();
+        insComment(newComment)
+        .then((res) => {
+            if (res.status === 200) {
+                getPostData();
                 setComment('');
             }
-        } catch (error) {
-            console.error(error);
+        })
+        .catch((e) => console.error(e));
+    }
+
+    const deletePost = () => {
+        if (window.confirm('게시글을 삭제하면 복구가 안됩니다. 삭제하시겠습니까?')) {
+            delPost(postId)
+            .then((res) => { if (res.status === 200) navigate('/') })
+            .catch((e) => console.error(e));
         }
     }
 
     useEffect(() => {
-        getPost();
+        getPostData();
     }, []);
 
 
     return (
         <Wrapper>
             <Container>
-                <Button
-                    title='뒤로 가기'
-                    onClick={() => {
-                        navigate('/');
-                    }}
-                />
-                <Button
-                    title='글 수정하기'
-                    onClick={() => {
-                        navigate('/');
-                    }}
-                />
+                <ButtonBox>
+                    <Button
+                        title='뒤로 가기'
+                        onClick={() => {
+                            navigate('/');
+                        }}
+                    />
+                    <Button
+                        title='수정'
+                        onClick={() => {
+                            navigate(`/post-modify/${postId}`);
+                        }}
+                    />
+                    <Button
+                        title='삭제'
+                        onClick={() => {
+                            deletePost();
+                        }}
+                    />
+                </ButtonBox>
                 <PostContainer>
                     <TitleText>{post.title}</TitleText>
                     <ContentText>{post.content}</ContentText>

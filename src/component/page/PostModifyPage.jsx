@@ -1,10 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import Button from "../ui/Button";
 import TextInput from "../ui/TextInput";
-import { useState } from "react";
-import axios from "axios";
-import { insPost } from "../../api/postAxios";
+import { useEffect, useState } from "react";
+import { getPost, updPost } from "../../api/postAxios";
 
 const Wrapper = styled.div`
     padding: 16px;
@@ -26,28 +25,32 @@ const Container = styled.div`
     }
 `;
 
-function PostWritePage(props) {
+function PostModifyPage() {
     const navigate = useNavigate();
-
+    const { postId } = useParams();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
 
-    const writePost = () => {
+    const modifyPost = () => {
         const newPost = {
+            postId: postId,
             title: title,
             content: content
         };
 
-       insPost(newPost)
-        .then((res) => {
-            if (res.status === 200) {
-                navigate("/");
-            }
-        })
-        .catch((error) => {
-            console.log(error);
-        });      
+        updPost(newPost)
+        .then((res) => { if (res.status === 200) navigate(`/post/${postId}`) })
+        .catch((e) => console.error(e));
     }
+
+    useEffect(() => {
+        getPost(postId)
+        .then((data) => {
+            setTitle(data.title);
+            setContent(data.content);
+        })
+        .catch((e) => console.error(e));
+    }, []);
 
     return (
         <Wrapper>
@@ -69,9 +72,9 @@ function PostWritePage(props) {
                 />
 
                 <Button
-                    title='글 작성하기'
+                    title='글 수정하기'
                     onClick={() => {
-                        writePost();
+                        modifyPost();
                     }}
                 />
             </Container>
@@ -79,4 +82,4 @@ function PostWritePage(props) {
     )
 }
 
-export default PostWritePage;
+export default PostModifyPage;
